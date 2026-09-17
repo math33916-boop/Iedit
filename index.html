@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>I✨R-1 — Smart Editors & AI Assistant</title>
+  <meta name="description" content="I✨R-1: Chat Screenshot Editor, Screenshot Editor, PDF Editor, Image Editor, Document Tools + AI Assistant. Connect via Osient & Truecaller." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="#home" class="logo">I✨R-1</a>
+      <button class="nav-toggle" aria-label="Toggle menu">☰</button>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#ai-assistant">AI Assistant</a></li>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header id="home" class="hero">
+    <div class="container hero-content">
+      <h1>I✨R-1</h1>
+      <p class="tagline">Smart Editors • AI-Powered Prompting • Instant Results</p>
+      <p class="hero-desc">
+        Edit chat screenshots, images, PDFs and documents with precision.
+        Let our AI Assistant craft the perfect prompt and apply edits for you.
+      </p>
+      <div class="hero-cta">
+        <a href="#ai-assistant" class="btn btn-primary">Try AI Assistant</a>
+        <a href="#features" class="btn btn-secondary">Explore Features</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Features Overview -->
+  <section id="features" class="section">
+    <div class="container">
+      <h2 class="section-title">Powerful Editing Tools</h2>
+      <p class="section-subtitle">Everything you need to edit screenshots, chats, images and PDFs in one place.</p>
+
+      <div class="features-grid">
+        <!-- Chat Screenshot Editor -->
+        <article class="feature-card" id="chat-editor">
+          <div class="feature-icon">💬</div>
+          <h3>Chat Screenshot Editor</h3>
+          <ul>
+            <li>Upload any chat screenshot</li>
+            <li>Edit visible text, names & timestamps</li>
+            <li>Change profile pictures</li>
+            <li>Add / delete message bubbles</li>
+            <li>WhatsApp-style templates</li>
+            <li>Export as PNG or JPG</li>
+          </ul>
+          <button class="btn btn-outline" onclick="openTool('chat')">Open Editor</button>
+        </article>
+
+        <!-- Screenshot Editor -->
+        <article class="feature-card" id="screenshot-editor">
+          <div class="feature-icon">📱</div>
+          <h3>Screenshot Editor</h3>
+          <ul>
+            <li>Crop, resize & rotate</li>
+            <li>Blur sensitive areas</li>
+            <li>Add text, stickers & shapes</li>
+            <li>Highlight important parts</li>
+            <li>Pixelate private info</li>
+            <li>Filters & color adjustments</li>
+          </ul>
+          <button class="btn btn-outline" onclick="openTool('screenshot')">Open Editor</button>
+        </article>
+
+        <!-- PDF Editor -->
+        <article class="feature-card" id="pdf-editor">
+          <div class="feature-icon">📄</div>
+          <h3>PDF Editor</h3>
+          <ul>
+            <li>Upload any PDF</li>
+            <li>Add / edit text (where supported)</li>
+            <li>Insert images, signatures & shapes</li>
+            <li>Highlight & underline</li>
+            <li>Rearrange or delete pages</li>
+            <li>Download the edited PDF</li>
+          </ul>
+          <button class="btn btn-outline" onclick="openTool('pdf')">Open Editor</button>
+        </article>
+
+        <!-- Image Editor -->
+        <article class="feature-card" id="image-editor">
+          <div class="feature-icon">🖼️</div>
+          <h3>Image Editor</h3>
+          <ul>
+            <li>Background removal</li>
+            <li>Text overlay & watermarks</li>
+            <li>Filters & effects</li>
+            <li>Compress & resize</li>
+            <li>Convert JPG ↔ PNG ↔ WebP</li>
+            <li>Quick export</li>
+          </ul>
+          <button class="btn btn-outline" onclick="openTool('image')">Open Editor</button>
+        </article>
+
+        <!-- Document Tools -->
+        <article class="feature-card" id="doc-tools">
+          <div class="feature-icon">✍️</div>
+          <h3>Document Tools</h3>
+          <ul>
+            <li>PDF → JPG conversion</li>
+            <li>JPG → PDF conversion</li>
+            <li>Merge multiple PDFs</li>
+            <li>Split PDF into pages</li>
+            <li>Compress PDF size</li>
+            <li>Batch processing ready</li>
+          </ul>
+          <button class="btn btn-outline" onclick="openTool('docs')">Open Tools</button>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Assistant -->
+  <section id="ai-assistant" class="section ai-section">
+    <div class="container">
+      <h2 class="section-title">AI Assistant</h2>
+      <p class="section-subtitle">
+        Tell the AI what you want. It will help you write better prompts and apply intelligent edits to your images, chats or PDFs.
+      </p>
+
+      <div class="ai-layout">
+        <div class="ai-chat-panel">
+          <div class="ai-header">
+            <span class="ai-avatar">✨</span>
+            <div>
+              <strong>I✨R-1 AI</strong>
+              <small>Prompt helper + Smart Editor</small>
+            </div>
+          </div>
+          <div id="ai-messages" class="ai-messages">
+            <div class="ai-msg bot">
+              <p>Hi! I’m the I✨R-1 AI Assistant.<br>
+              Describe what you want to edit or the prompt you need. I can help refine your request and suggest edits for screenshots, chats, images or PDFs.</p>
+            </div>
+          </div>
+          <div class="ai-input-area">
+            <textarea id="ai-input" placeholder="Example: Make the chat look like WhatsApp, change the name to Alex, blur the phone number..." rows="3"></textarea>
+            <div class="ai-actions">
+              <button class="btn btn-primary" onclick="sendAiMessage()">Send to AI</button>
+              <button class="btn btn-secondary" onclick="clearAiChat()">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-prompt-panel">
+          <h3>AI Prompt Helper</h3>
+          <p>Need a strong prompt for any AI tool? Describe your goal and get an optimized prompt.</p>
+          <textarea id="prompt-goal" placeholder="What do you want the AI to do? e.g. 'Remove background and add soft shadow to product photo'" rows="4"></textarea>
+          <button class="btn btn-primary full-width" onclick="generatePrompt()">Generate Better Prompt</button>
+          <div id="generated-prompt" class="generated-prompt hidden"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Tool Area (mock workspace) -->
+  <section id="tools" class="section tools-section">
+    <div class="container">
+      <h2 class="section-title">Quick Workspace</h2>
+      <p class="section-subtitle">Select a tool above or drop a file here to start editing.</p>
+
+      <div class="workspace">
+        <div class="drop-zone" id="drop-zone">
+          <p>📁 Drag & drop image / PDF / screenshot here</p>
+          <p class="small">or click to browse</p>
+          <input type="file" id="file-input" accept="image/*,.pdf" hidden />
+        </div>
+        <div id="preview-area" class="preview-area hidden">
+          <img id="preview-img" alt="Preview" />
+          <canvas id="edit-canvas" class="hidden"></canvas>
+          <div class="preview-actions">
+            <button class="btn btn-secondary" onclick="resetWorkspace()">Reset</button>
+            <button class="btn btn-primary" onclick="downloadResult()">Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact / Information -->
+  <section id="contact" class="section contact-section">
+    <div class="container">
+      <h2 class="section-title">Connect with Us</h2>
+      <p class="section-subtitle">Reach out via Osient or Truecaller for support and collaboration.</p>
+
+      <div class="contact-grid">
+        <div class="contact-card">
+          <h3>Osient</h3>
+          <p class="contact-label">Primary Support</p>
+          <a href="tel:+910000000001" class="contact-number">+91 00000 00001</a>
+          <p class="contact-note">Replace with your real Osient number</p>
+        </div>
+
+        <div class="contact-card">
+          <h3>Truecaller</h3>
+          <p class="contact-label">Verified Contact</p>
+          <a href="tel:+910000000002" class="contact-number">+91 00000 00002</a>
+          <p class="contact-note">Replace with your real Truecaller number</p>
+        </div>
+
+        <div class="contact-card">
+          <h3>Extra Number</h3>
+          <p class="contact-label">Additional Line</p>
+          <a href="tel:+910000000003" class="contact-number">+91 00000 00003</a>
+          <p class="contact-note">You asked for one more number — update this too</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <p><strong>How to update numbers:</strong> Open <code>index.html</code>, search for the phone numbers in the Contact section and replace the placeholders with your real Osient and Truecaller numbers.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-brand">I✨R-1</div>
+      <p>Smart Editors + AI Assistant</p>
+      <p class="copyright">© 2026 I✨R-1. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Simple Modal for tools -->
+  <div id="tool-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h3 id="modal-title">Tool</h3>
+      <p id="modal-desc">This is a frontend demo. Full client-side editing can be extended with Canvas / PDF.js / libraries.</p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeModal()">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
