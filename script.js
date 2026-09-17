@@ -66,12 +66,13 @@ async function fetchPublicPhoneInfo(e164Number) {
         return {
           name: json.carrier ? `${json.carrier} Number` : 'Valid Number',
           carrier: json.carrier || 'Unknown',
-          location: json.city || json.regionName || json.countryName || json.country || '—',
+          location: json.city || json.regionName || json.region || '—',
           type: (json.numberType || 'Unknown').toString(),
           spam: json.isDisposible ? 'High (Disposable)' : 'Low',
           source: 'Public API (phone-number-api.com)',
           valid: json.numberValid !== false,
-          country: json.countryName || json.country || '—'
+          country: json.countryName || json.country || '—',
+          coords: (json.lat && json.lon) ? `${json.lat}, ${json.lon}` : '—'
         };
       }
     }
@@ -87,12 +88,13 @@ async function fetchPublicPhoneInfo(e164Number) {
       return {
         name: json2.carrier ? `${json2.carrier} Number` : 'Valid Number',
         carrier: json2.carrier || 'Unknown',
-        location: json2.geo_name || json2.country || '—',
+        location: json2.geo_name || '—',
         type: json2.type || 'Unknown',
         spam: '—',
         source: 'Public API (libphonenumber)',
         valid: json2.is_valid,
-        country: json2.country || '—'
+        country: json2.country || '—',
+        coords: '—'
       };
     }
   } catch (e) {
@@ -124,12 +126,13 @@ function localFallback(number, country) {
   return {
     name: 'Number Info',
     carrier: carrier,
-    location: country === '+91' ? 'India' : 'International',
+    location: '—',
     type: 'Mobile',
     spam: '—',
     source: 'Local Prefix Detection (Offline)',
     valid: true,
-    country: country === '+91' ? 'India' : '—'
+    country: country === '+91' ? 'India' : '—',
+    coords: '—'
   };
 }
 
@@ -137,8 +140,10 @@ function displayResult(data, fullNumber) {
   document.getElementById('result-name').textContent = data.name || 'Valid Number';
   document.getElementById('result-number').textContent = fullNumber;
   document.getElementById('result-carrier').textContent = data.carrier || '—';
-  document.getElementById('result-location').textContent = data.location || data.country || '—';
   document.getElementById('result-type').textContent = data.type || '—';
+  document.getElementById('result-country').textContent = data.country || '—';
+  document.getElementById('result-location').textContent = data.location || '—';
+  document.getElementById('result-coords').textContent = data.coords || '—';
   document.getElementById('result-spam').textContent = data.spam || '—';
   document.getElementById('result-source').textContent = data.source || 'Public API';
 
