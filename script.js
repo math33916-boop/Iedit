@@ -1,226 +1,181 @@
-// ===== Navigation Toggle =====
-const navToggle = document.querySelector('.nav-toggle');
-const navLinks = document.querySelector('.nav-links');
-
-if (navToggle) {
-  navToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('open');
-  });
-}
-
-// Close mobile menu on link click
-document.querySelectorAll('.nav-links a').forEach(link => {
-  link.addEventListener('click', () => {
-    navLinks.classList.remove('open');
-  });
-});
-
-// ===== Tool Modal =====
-const toolInfo = {
-  chat: {
-    title: 'Chat Screenshot Editor',
-    desc: 'Upload a chat screenshot and edit names, timestamps, messages, profile pictures and bubbles. WhatsApp-style templates included. Export as PNG/JPG. Full canvas-based editing can be connected here.'
+// ===== Mock Database (Demo only) =====
+const mockData = {
+  "9876543210": {
+    name: "Rahul Sharma",
+    carrier: "Jio",
+    location: "Delhi NCR",
+    type: "Mobile",
+    spam: "Low",
+    source: "Demo Database"
   },
-  screenshot: {
-    title: 'Screenshot Editor',
-    desc: 'Crop, resize, blur, pixelate, add text/stickers/shapes, highlight areas and apply filters. Perfect for cleaning screenshots before sharing.'
+  "9123456789": {
+    name: "Priya Patel",
+    carrier: "Airtel",
+    location: "Mumbai, Maharashtra",
+    type: "Mobile",
+    spam: "Low",
+    source: "Demo Database"
   },
-  pdf: {
-    title: 'PDF Editor',
-    desc: 'Add text, images, signatures and shapes. Highlight, rearrange or delete pages, then download the edited PDF. Powered by PDF.js / pdf-lib when fully integrated.'
+  "9988776655": {
+    name: "Unknown / Business",
+    carrier: "Vi (Vodafone Idea)",
+    location: "Bangalore, Karnataka",
+    type: "Mobile",
+    spam: "Medium",
+    source: "Demo Database"
   },
-  image: {
-    title: 'Image Editor',
-    desc: 'Background removal, text overlay, filters, compress, resize and format conversion (JPG ↔ PNG ↔ WebP).'
-  },
-  docs: {
-    title: 'Document Tools',
-    desc: 'Convert PDF ↔ JPG, merge PDFs, split pages, compress files. Batch-friendly utilities for everyday document work.'
+  "9000012345": {
+    name: "Spam Likely",
+    carrier: "BSNL",
+    location: "Kolkata, West Bengal",
+    type: "Mobile",
+    spam: "High",
+    source: "Demo Database"
   }
 };
 
-function openTool(type) {
-  const info = toolInfo[type] || { title: 'Tool', desc: 'Coming soon.' };
-  document.getElementById('modal-title').textContent = info.title;
-  document.getElementById('modal-desc').textContent = info.desc;
-  document.getElementById('tool-modal').classList.remove('hidden');
+// Carrier prefix map (simplified public knowledge)
+const carrierPrefixes = {
+  "70": "Jio", "71": "Jio", "72": "Jio", "73": "Jio", "74": "Jio",
+  "75": "Jio", "76": "Jio", "77": "Jio", "78": "Jio", "79": "Jio",
+  "80": "Airtel", "81": "Airtel", "82": "Airtel", "83": "Airtel",
+  "84": "Airtel", "85": "Airtel", "86": "Airtel", "87": "Airtel",
+  "88": "Airtel", "89": "Airtel",
+  "90": "Vi", "91": "Vi", "92": "Vi", "93": "Vi", "94": "Vi",
+  "95": "Vi", "96": "Vi", "97": "Vi", "98": "Vi", "99": "Vi",
+  "60": "Jio", "61": "Jio", "62": "Jio", "63": "Jio",
+  "64": "Jio", "65": "Jio", "66": "Jio", "67": "Jio", "68": "Jio", "69": "Jio"
+};
+
+function getCarrierFromNumber(num) {
+  const prefix = num.substring(0, 2);
+  return carrierPrefixes[prefix] || "Unknown Operator";
 }
 
-function closeModal() {
-  document.getElementById('tool-modal').classList.add('hidden');
+function getRandomLocation() {
+  const locations = [
+    "Delhi NCR", "Mumbai, Maharashtra", "Bangalore, Karnataka",
+    "Hyderabad, Telangana", "Chennai, Tamil Nadu", "Kolkata, West Bengal",
+    "Pune, Maharashtra", "Ahmedabad, Gujarat", "Jaipur, Rajasthan",
+    "Lucknow, Uttar Pradesh", "Chandigarh", "Indore, Madhya Pradesh"
+  ];
+  return locations[Math.floor(Math.random() * locations.length)];
 }
 
-// Close modal on backdrop click
-document.getElementById('tool-modal')?.addEventListener('click', (e) => {
-  if (e.target.id === 'tool-modal') closeModal();
-});
+// ===== UI Helpers =====
+const phoneInput = document.getElementById('phone-input');
+const searchBtn = document.getElementById('search-btn');
+const loadingEl = document.getElementById('loading');
+const resultEl = document.getElementById('result');
+const errorEl = document.getElementById('error');
 
-// ===== AI Chat =====
-const aiMessages = document.getElementById('ai-messages');
-const aiInput = document.getElementById('ai-input');
+function show(el) { el.classList.remove('hidden'); }
+function hide(el) { el.classList.add('hidden'); }
 
-function addMessage(text, isUser = false) {
-  const div = document.createElement('div');
-  div.className = `ai-msg ${isUser ? 'user' : 'bot'}`;
-  div.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
-  aiMessages.appendChild(div);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
+function setLoading(isLoading) {
+  if (isLoading) {
+    hide(resultEl);
+    hide(errorEl);
+    show(loadingEl);
+    searchBtn.disabled = true;
+  } else {
+    hide(loadingEl);
+    searchBtn.disabled = false;
+  }
 }
 
-function sendAiMessage() {
-  const text = aiInput.value.trim();
-  if (!text) return;
+// ===== Main Lookup =====
+function lookupNumber() {
+  const country = document.getElementById('country-code').value;
+  let number = phoneInput.value.replace(/\D/g, ''); // only digits
 
-  addMessage(text, true);
-  aiInput.value = '';
-
-  // Simulated intelligent response (replace with real xAI / Grok API call later)
-  setTimeout(() => {
-    const reply = generateAiReply(text);
-    addMessage(reply);
-  }, 600 + Math.random() * 400);
-}
-
-function generateAiReply(userText) {
-  const lower = userText.toLowerCase();
-
-  if (lower.includes('whatsapp') || lower.includes('chat') || lower.includes('message')) {
-    return `Got it! For a WhatsApp-style chat edit I suggest:\n\n1. Change display name to the one you want\n2. Update timestamps to look natural\n3. Adjust bubble colors if needed\n4. Blur or remove any phone numbers\n\nWould you like me to generate a precise editing prompt for the Chat Screenshot Editor?`;
-  }
-
-  if (lower.includes('blur') || lower.includes('pixelate') || lower.includes('hide')) {
-    return `To protect privacy:\n• Use the Screenshot Editor → Pixelate or Blur tool\n• Select the sensitive area (phone number, face, address)\n• Export as PNG for best quality\n\nTell me the exact area and I can refine the steps.`;
-  }
-
-  if (lower.includes('pdf') || lower.includes('signature') || lower.includes('page')) {
-    return `For PDF work:\n• Upload the PDF in the PDF Editor\n• Use “Add Signature” or “Add Text”\n• Rearrange pages if needed\n• Download the final file\n\nDescribe the exact change (e.g. “add signature on page 2”) and I’ll give you a step-by-step prompt.`;
-  }
-
-  if (lower.includes('background') || lower.includes('remove bg')) {
-    return `Background removal is available in the Image Editor.\n\nQuick tip: Upload a clear product/person photo → click “Remove Background” → optionally add a soft shadow or solid color.\n\nWant a ready-to-use prompt for an external AI background remover?`;
-  }
-
-  if (lower.includes('prompt') || lower.includes('help me write')) {
-    return `Sure! Tell me the final result you want (e.g. “make this product photo look premium with soft lighting and white background”) and I’ll write a strong, detailed prompt for you.`;
-  }
-
-  // Default helpful reply
-  return `Thanks for the details!\n\nI can help you:\n• Refine prompts for better AI results\n• Plan edits for chat screenshots, images or PDFs\n• Suggest the right tool inside I✨R-1\n\nJust describe the before → after you want, and I’ll guide you step by step.`;
-}
-
-function clearAiChat() {
-  aiMessages.innerHTML = `
-    <div class="ai-msg bot">
-      <p>Hi! I’m the I✨R-1 AI Assistant.<br>
-      Describe what you want to edit or the prompt you need. I can help refine your request and suggest edits for screenshots, chats, images or PDFs.</p>
-    </div>
-  `;
-}
-
-// Enter key to send
-aiInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendAiMessage();
-  }
-});
-
-// ===== Prompt Generator =====
-function generatePrompt() {
-  const goal = document.getElementById('prompt-goal').value.trim();
-  const output = document.getElementById('generated-prompt');
-
-  if (!goal) {
-    output.classList.remove('hidden');
-    output.textContent = 'Please describe what you want the AI to do first.';
+  if (number.length < 8 || number.length > 12) {
+    showError("Please enter a valid phone number (8–12 digits).");
     return;
   }
 
-  // Simple but useful prompt engineering
-  const prompt = `You are an expert image and document editor.
-
-Task: ${goal}
-
-Requirements:
-- Keep the result clean, professional and natural-looking
-- Preserve important details unless asked to remove them
-- Use high quality and realistic lighting/colors
-- If text is involved, make it sharp and correctly spelled
-- Output only the final edited result or clear step-by-step instructions
-
-Additional context: This will be used inside the I✨R-1 editor suite (chat screenshots, images, PDFs).`;
-
-  output.classList.remove('hidden');
-  output.textContent = prompt;
-}
-
-// ===== File Drop / Preview =====
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const previewArea = document.getElementById('preview-area');
-const previewImg = document.getElementById('preview-img');
-
-dropZone?.addEventListener('click', () => fileInput.click());
-
-dropZone?.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.classList.add('dragover');
-});
-
-dropZone?.addEventListener('dragleave', () => {
-  dropZone.classList.remove('dragover');
-});
-
-dropZone?.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
-});
-
-fileInput?.addEventListener('change', () => {
-  const file = fileInput.files[0];
-  if (file) handleFile(file);
-});
-
-function handleFile(file) {
-  if (file.type.startsWith('image/')) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImg.src = e.target.result;
-      dropZone.classList.add('hidden');
-      previewArea.classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-  } else if (file.type === 'application/pdf') {
-    alert('PDF preview is ready for integration with PDF.js. For now, use the PDF Editor button above.');
-  } else {
-    alert('Please upload an image or PDF.');
+  // For India, expect 10 digits
+  if (country === "+91" && number.length !== 10) {
+    showError("Indian numbers should be 10 digits.");
+    return;
   }
+
+  setLoading(true);
+
+  // Simulate network delay
+  setTimeout(() => {
+    const data = generateResult(number, country);
+    displayResult(data, country + number);
+    setLoading(false);
+  }, 1200 + Math.random() * 800);
 }
 
-function resetWorkspace() {
-  previewArea.classList.add('hidden');
-  dropZone.classList.remove('hidden');
-  previewImg.src = '';
-  fileInput.value = '';
+function generateResult(number, country) {
+  // Check mock database first
+  if (mockData[number]) {
+    return { ...mockData[number], isDemo: true };
+  }
+
+  // Generate realistic looking demo data
+  const carrier = country === "+91" ? getCarrierFromNumber(number) : "International";
+  const location = country === "+91" ? getRandomLocation() : "Unknown Region";
+  
+  // Random name style for demo
+  const firstNames = ["Amit", "Sneha", "Vikram", "Ananya", "Rohit", "Neha", "Karan", "Pooja", "Unknown"];
+  const lastNames = ["Kumar", "Singh", "Gupta", "Verma", "Shah", "Reddy", "Khan", ""];
+  const name = Math.random() > 0.3 
+    ? firstNames[Math.floor(Math.random()*firstNames.length)] + " " + lastNames[Math.floor(Math.random()*lastNames.length)]
+    : "Not Found in Demo DB";
+
+  const spamLevels = ["Low", "Low", "Low", "Medium", "High"];
+  const spam = spamLevels[Math.floor(Math.random() * spamLevels.length)];
+
+  return {
+    name: name.trim(),
+    carrier,
+    location,
+    type: "Mobile",
+    spam,
+    source: "Demo Mode (Mock Data)",
+    isDemo: true
+  };
 }
 
-function downloadResult() {
-  if (!previewImg.src) return;
-  const a = document.createElement('a');
-  a.href = previewImg.src;
-  a.download = 'ir1-edited-image.png';
-  a.click();
+function displayResult(data, fullNumber) {
+  document.getElementById('result-name').textContent = data.name;
+  document.getElementById('result-number').textContent = fullNumber;
+  document.getElementById('result-carrier').textContent = data.carrier;
+  document.getElementById('result-location').textContent = data.location;
+  document.getElementById('result-type').textContent = data.type;
+  document.getElementById('result-spam').textContent = data.spam;
+  document.getElementById('result-source').textContent = data.source;
+
+  // Avatar initial
+  const initial = data.name.charAt(0).toUpperCase() || "?";
+  document.getElementById('result-avatar').textContent = initial;
+
+  // Badge
+  const badge = document.getElementById('result-badge');
+  badge.textContent = data.spam === "High" ? "Spam Risk" : "Demo";
+  badge.className = "status-badge" + (data.spam === "High" ? " spam" : "");
+
+  hide(errorEl);
+  show(resultEl);
 }
 
-// ===== Smooth scroll for older browsers =====
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
-    const target = document.querySelector(this.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
+function showError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  hide(resultEl);
+  hide(loadingEl);
+  show(errorEl);
+}
+
+// Enter key support
+phoneInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') lookupNumber();
+});
+
+// Only allow numbers
+phoneInput.addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '');
 });
