@@ -1,68 +1,5 @@
-// ===== Mock Database (Demo only) =====
-const mockData = {
-  "9876543210": {
-    name: "Rahul Sharma",
-    carrier: "Jio",
-    location: "Delhi NCR",
-    type: "Mobile",
-    spam: "Low",
-    source: "Demo Database"
-  },
-  "9123456789": {
-    name: "Priya Patel",
-    carrier: "Airtel",
-    location: "Mumbai, Maharashtra",
-    type: "Mobile",
-    spam: "Low",
-    source: "Demo Database"
-  },
-  "9988776655": {
-    name: "Unknown / Business",
-    carrier: "Vi (Vodafone Idea)",
-    location: "Bangalore, Karnataka",
-    type: "Mobile",
-    spam: "Medium",
-    source: "Demo Database"
-  },
-  "9000012345": {
-    name: "Spam Likely",
-    carrier: "BSNL",
-    location: "Kolkata, West Bengal",
-    type: "Mobile",
-    spam: "High",
-    source: "Demo Database"
-  }
-};
+// ===== Public Phone Lookup (No personal name - only public telecom data) =====
 
-// Carrier prefix map (simplified public knowledge)
-const carrierPrefixes = {
-  "70": "Jio", "71": "Jio", "72": "Jio", "73": "Jio", "74": "Jio",
-  "75": "Jio", "76": "Jio", "77": "Jio", "78": "Jio", "79": "Jio",
-  "80": "Airtel", "81": "Airtel", "82": "Airtel", "83": "Airtel",
-  "84": "Airtel", "85": "Airtel", "86": "Airtel", "87": "Airtel",
-  "88": "Airtel", "89": "Airtel",
-  "90": "Vi", "91": "Vi", "92": "Vi", "93": "Vi", "94": "Vi",
-  "95": "Vi", "96": "Vi", "97": "Vi", "98": "Vi", "99": "Vi",
-  "60": "Jio", "61": "Jio", "62": "Jio", "63": "Jio",
-  "64": "Jio", "65": "Jio", "66": "Jio", "67": "Jio", "68": "Jio", "69": "Jio"
-};
-
-function getCarrierFromNumber(num) {
-  const prefix = num.substring(0, 2);
-  return carrierPrefixes[prefix] || "Unknown Operator";
-}
-
-function getRandomLocation() {
-  const locations = [
-    "Delhi NCR", "Mumbai, Maharashtra", "Bangalore, Karnataka",
-    "Hyderabad, Telangana", "Chennai, Tamil Nadu", "Kolkata, West Bengal",
-    "Pune, Maharashtra", "Ahmedabad, Gujarat", "Jaipur, Rajasthan",
-    "Lucknow, Uttar Pradesh", "Chandigarh", "Indore, Madhya Pradesh"
-  ];
-  return locations[Math.floor(Math.random() * locations.length)];
-}
-
-// ===== UI Helpers =====
 const phoneInput = document.getElementById('phone-input');
 const searchBtn = document.getElementById('search-btn');
 const loadingEl = document.getElementById('loading');
@@ -84,80 +21,138 @@ function setLoading(isLoading) {
   }
 }
 
-// ===== Main Lookup =====
-function lookupNumber() {
+// ===== Main Lookup using Public APIs =====
+async function lookupNumber() {
   const country = document.getElementById('country-code').value;
-  let number = phoneInput.value.replace(/\D/g, ''); // only digits
+  let number = phoneInput.value.replace(/\D/g, '');
 
   if (number.length < 8 || number.length > 12) {
     showError("Please enter a valid phone number (8–12 digits).");
     return;
   }
 
-  // For India, expect 10 digits
   if (country === "+91" && number.length !== 10) {
     showError("Indian numbers should be 10 digits.");
     return;
   }
 
+  const fullNumber = country + number;
   setLoading(true);
 
-  // Simulate network delay
-  setTimeout(() => {
-    const data = generateResult(number, country);
-    displayResult(data, country + number);
+  try {
+    const data = await fetchPublicPhoneInfo(fullNumber);
+    displayResult(data, fullNumber);
+  } catch (err) {
+    console.error(err);
+    const fallback = localFallback(number, country);
+    displayResult(fallback, fullNumber);
+  } finally {
     setLoading(false);
-  }, 1200 + Math.random() * 800);
+  }
 }
 
-function generateResult(number, country) {
-  // Check mock database first
-  if (mockData[number]) {
-    return { ...mockData[number], isDemo: true };
+async function fetchPublicPhoneInfo(e164Number) {
+  const encoded = encodeURIComponent(e164Number);
+
+  // 1. Primary free public API (no key)
+  try {
+    const res = await fetch(`https://phone-number-api.com/json/?number=${encoded}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.status === 'success' || json.numberValid) {
+        return {
+          name: json.carrier ? `${json.carrier} Number` : 'Valid Number',
+          carrier: json.carrier || 'Unknown',
+          location: json.city || json.regionName || json.countryName || json.country || '—',
+          type: (json.numberType || 'Unknown').toString(),
+          spam: json.isDisposible ? 'High (Disposable)' : 'Low',
+          source: 'Public API (phone-number-api.com)',
+          valid: json.numberValid !== false,
+          country: json.countryName || json.country || '—'
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Primary API failed', e);
   }
 
-  // Generate realistic looking demo data
-  const carrier = country === "+91" ? getCarrierFromNumber(number) : "International";
-  const location = country === "+91" ? getRandomLocation() : "Unknown Region";
-  
-  // Random name style for demo
-  const firstNames = ["Amit", "Sneha", "Vikram", "Ananya", "Rohit", "Neha", "Karan", "Pooja", "Unknown"];
-  const lastNames = ["Kumar", "Singh", "Gupta", "Verma", "Shah", "Reddy", "Khan", ""];
-  const name = Math.random() > 0.3 
-    ? firstNames[Math.floor(Math.random()*firstNames.length)] + " " + lastNames[Math.floor(Math.random()*lastNames.length)]
-    : "Not Found in Demo DB";
+  // 2. Fallback public API
+  try {
+    const res2 = await fetch(`https://libphonenumberapi.com/api/phone-numbers/${encoded}`);
+    if (res2.ok) {
+      const json2 = await res2.json();
+      return {
+        name: json2.carrier ? `${json2.carrier} Number` : 'Valid Number',
+        carrier: json2.carrier || 'Unknown',
+        location: json2.geo_name || json2.country || '—',
+        type: json2.type || 'Unknown',
+        spam: '—',
+        source: 'Public API (libphonenumber)',
+        valid: json2.is_valid,
+        country: json2.country || '—'
+      };
+    }
+  } catch (e) {
+    console.warn('Secondary API failed', e);
+  }
 
-  const spamLevels = ["Low", "Low", "Low", "Medium", "High"];
-  const spam = spamLevels[Math.floor(Math.random() * spamLevels.length)];
+  throw new Error('All public APIs failed');
+}
+
+// Local offline fallback for India
+function localFallback(number, country) {
+  const carrierPrefixes = {
+    "60": "Jio", "61": "Jio", "62": "Jio", "63": "Jio", "64": "Jio",
+    "65": "Jio", "66": "Jio", "67": "Jio", "68": "Jio", "69": "Jio",
+    "70": "Jio", "71": "Jio", "72": "Jio", "73": "Jio", "74": "Jio",
+    "75": "Jio", "76": "Jio", "77": "Jio", "78": "Jio", "79": "Jio",
+    "80": "Airtel", "81": "Airtel", "82": "Airtel", "83": "Airtel",
+    "84": "Airtel", "85": "Airtel", "86": "Airtel", "87": "Airtel",
+    "88": "Airtel", "89": "Airtel",
+    "90": "Vi", "91": "Vi", "92": "Vi", "93": "Vi", "94": "Vi",
+    "95": "Vi", "96": "Vi", "97": "Vi", "98": "Vi", "99": "Vi"
+  };
+
+  let carrier = 'Unknown';
+  if (country === '+91' && number.length >= 2) {
+    carrier = carrierPrefixes[number.substring(0, 2)] || 'Unknown Operator';
+  }
 
   return {
-    name: name.trim(),
-    carrier,
-    location,
-    type: "Mobile",
-    spam,
-    source: "Demo Mode (Mock Data)",
-    isDemo: true
+    name: 'Number Info',
+    carrier: carrier,
+    location: country === '+91' ? 'India' : 'International',
+    type: 'Mobile',
+    spam: '—',
+    source: 'Local Prefix Detection (Offline)',
+    valid: true,
+    country: country === '+91' ? 'India' : '—'
   };
 }
 
 function displayResult(data, fullNumber) {
-  document.getElementById('result-name').textContent = data.name;
+  document.getElementById('result-name').textContent = data.name || 'Valid Number';
   document.getElementById('result-number').textContent = fullNumber;
-  document.getElementById('result-carrier').textContent = data.carrier;
-  document.getElementById('result-location').textContent = data.location;
-  document.getElementById('result-type').textContent = data.type;
-  document.getElementById('result-spam').textContent = data.spam;
-  document.getElementById('result-source').textContent = data.source;
+  document.getElementById('result-carrier').textContent = data.carrier || '—';
+  document.getElementById('result-location').textContent = data.location || data.country || '—';
+  document.getElementById('result-type').textContent = data.type || '—';
+  document.getElementById('result-spam').textContent = data.spam || '—';
+  document.getElementById('result-source').textContent = data.source || 'Public API';
 
-  // Avatar initial
-  const initial = data.name.charAt(0).toUpperCase() || "?";
+  const initial = (data.carrier || data.name || '?').charAt(0).toUpperCase();
   document.getElementById('result-avatar').textContent = initial;
 
-  // Badge
   const badge = document.getElementById('result-badge');
-  badge.textContent = data.spam === "High" ? "Spam Risk" : "Demo";
-  badge.className = "status-badge" + (data.spam === "High" ? " spam" : "");
+  if (data.spam && data.spam.toLowerCase().includes('high')) {
+    badge.textContent = 'Risk';
+    badge.className = 'status-badge spam';
+  } else {
+    badge.textContent = data.valid === false ? 'Invalid' : 'Public';
+    badge.className = 'status-badge';
+  }
 
   hide(errorEl);
   show(resultEl);
@@ -170,12 +165,11 @@ function showError(msg) {
   show(errorEl);
 }
 
-// Enter key support
+// Events
 phoneInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') lookupNumber();
 });
 
-// Only allow numbers
 phoneInput.addEventListener('input', (e) => {
   e.target.value = e.target.value.replace(/\D/g, '');
 });
